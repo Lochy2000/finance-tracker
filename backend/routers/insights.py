@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Request, Query
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Optional, List
 
 from services.ai_service import (
@@ -99,11 +99,7 @@ def create_insights_router(db, get_current_user):
         
         # Get recent transactions
         now = datetime.now(timezone.utc)
-        thirty_days_ago = datetime(
-            now.year, now.month, now.day, tzinfo=timezone.utc
-        ) - timedelta(days=30)
-        
-        from datetime import timedelta
+        thirty_days_ago = now - timedelta(days=30)
         
         transactions = await db.transactions.find(
             {

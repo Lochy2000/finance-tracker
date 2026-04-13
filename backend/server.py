@@ -155,8 +155,10 @@ async def seed_sample_data():
         return
     
     import uuid
-    import random
+    import secrets
     from datetime import timedelta
+    
+    rng = secrets.SystemRandom()
     
     categories = ["Groceries", "Transport", "Dining", "Shopping", "Entertainment", "Bills", "Health"]
     merchants = {
@@ -175,27 +177,23 @@ async def seed_sample_data():
     # Generate 3 months of sample data
     for days_ago in range(90):
         date = now - timedelta(days=days_ago)
-        num_txns = random.randint(1, 5)
+        num_txns = rng.randint(1, 5)
         
         for _ in range(num_txns):
-            category = random.choice(categories)
-            merchant = random.choice(merchants[category])
+            category = rng.choice(categories)
+            merchant = rng.choice(merchants[category])
             
             # Generate realistic amounts
-            if category == "Groceries":
-                amount = -round(random.uniform(10, 80), 2)
-            elif category == "Transport":
-                amount = -round(random.uniform(2, 50), 2)
-            elif category == "Dining":
-                amount = -round(random.uniform(5, 40), 2)
-            elif category == "Shopping":
-                amount = -round(random.uniform(15, 200), 2)
-            elif category == "Entertainment":
-                amount = -round(random.uniform(5, 50), 2)
-            elif category == "Bills":
-                amount = -round(random.uniform(30, 150), 2)
-            else:
-                amount = -round(random.uniform(5, 100), 2)
+            amount_ranges = {
+                "Groceries": (10, 80),
+                "Transport": (2, 50),
+                "Dining": (5, 40),
+                "Shopping": (15, 200),
+                "Entertainment": (5, 50),
+                "Bills": (30, 150),
+            }
+            lo, hi = amount_ranges.get(category, (5, 100))
+            amount = -round(rng.uniform(lo, hi), 2)
             
             txn_id = f"txn_{uuid.uuid4().hex[:12]}"
             transactions.append({
@@ -210,7 +208,7 @@ async def seed_sample_data():
                 "category": category,
                 "subcategory": None,
                 "source_file_id": None,
-                "confidence_score": round(random.uniform(0.7, 0.95), 2),
+                "confidence_score": round(rng.uniform(0.7, 0.95), 2),
                 "notes": None,
                 "created_at": datetime.now(timezone.utc).isoformat()
             })

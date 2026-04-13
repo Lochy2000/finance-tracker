@@ -9,8 +9,11 @@ TODO: Replace mock implementations with actual AI model calls
 """
 
 from typing import List, Dict, Optional
-import random
+import secrets
 from datetime import datetime, timezone
+
+# Cryptographically secure RNG for confidence scores and mock data
+_rng = secrets.SystemRandom()
 
 
 # Category mappings for rule-based categorization
@@ -55,7 +58,7 @@ async def categorize_transaction(merchant_raw: str, amount: float) -> Dict:
             if keyword in merchant_lower:
                 subcategories = SUBCATEGORIES.get(category, [])
                 subcategory = subcategories[0] if subcategories else None
-                confidence = random.uniform(0.75, 0.95)
+                confidence = _rng.uniform(0.75, 0.95)
                 return {
                     "category": category,
                     "subcategory": subcategory,
@@ -66,7 +69,7 @@ async def categorize_transaction(merchant_raw: str, amount: float) -> Dict:
     return {
         "category": "Other",
         "subcategory": None,
-        "confidence_score": round(random.uniform(0.3, 0.5), 2)
+        "confidence_score": round(_rng.uniform(0.3, 0.5), 2)
     }
 
 

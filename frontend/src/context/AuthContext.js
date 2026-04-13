@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { authApi } from '../lib/api';
 import { formatApiErrorDetail } from '../lib/utils';
 
@@ -12,7 +12,7 @@ export function AuthProvider({ children }) {
     try {
       const response = await authApi.me();
       setUser(response.data);
-    } catch (error) {
+    } catch {
       setUser(false);
     } finally {
       setLoading(false);
@@ -20,8 +20,6 @@ export function AuthProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    // CRITICAL: If returning from OAuth callback, skip the /me check.
-    // AuthCallback will exchange the session_id and establish the session first.
     if (window.location.hash?.includes('session_id=')) {
       setLoading(false);
       return;
@@ -29,7 +27,7 @@ export function AuthProvider({ children }) {
     checkAuth();
   }, [checkAuth]);
 
-  const login = async (email, password) => {
+  const login = useCallback(async (email, password) => {
     try {
       const response = await authApi.login({ email, password });
       setUser(response.data);
@@ -40,9 +38,9 @@ export function AuthProvider({ children }) {
         error: formatApiErrorDetail(error.response?.data?.detail) || error.message,
       };
     }
-  };
+  }, []);
 
-  const register = async (email, password, name) => {
+  const register = useCallback(async (email, password, name) => {
     try {
       const response = await authApi.register({ email, password, name });
       setUser(response.data);
@@ -53,24 +51,23 @@ export function AuthProvider({ children }) {
         error: formatApiErrorDetail(error.response?.data?.detail) || error.message,
       };
     }
-  };
+  }, []);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await authApi.logout();
-    } catch (error) {
-      console.error('Logout error:', error);
+    } catch {
+      // Logout best-effort
     }
     setUser(false);
-  };
+  }, []);
 
-  const loginWithGoogle = () => {
-    // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
+  const loginWithGoogle = useCallback(() => {
     const redirectUrl = window.location.origin + '/dashboard';
     window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
-  };
+  }, []);
 
-  const handleGoogleCallback = async (sessionId) => {
+  const handleGoogleCallback = useCallback(async (sessionId) => {
     try {
       const response = await authApi.googleSession(sessionId);
       setUser(response.data);
@@ -81,21 +78,21 @@ export function AuthProvider({ children }) {
         error: formatApiErrorDetail(error.response?.data?.detail) || error.message,
       };
     }
-  };
+  }, []);
+
+  const value = useMemo(() => ({
+    user,
+    loading,
+    login,
+    register,
+    logout,
+    loginWithGoogle,
+    handleGoogleCallback,
+    checkAuth,
+  }), [user, loading, login, register, logout, loginWithGoogle, handleGoogleCallback, checkAuth]);
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        loading,
-        login,
-        register,
-        logout,
-        loginWithGoogle,
-        handleGoogleCallback,
-        checkAuth,
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
