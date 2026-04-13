@@ -1,0 +1,105 @@
+{
+  "project_name": "LedgerLens",
+  "domain": "Finance, Banking, AI Tracker",
+  "theme": "LIGHT",
+  "archetype": "1 (Organic & Earthy)",
+  "emotion_goal": "Trust, clarity, privacy, and calm. A smart financial workspace, not a flashy fintech app.",
+  "colors": {
+    "background": {
+      "default": "#F9F9F8",
+      "surface": "#FFFFFF",
+      "subtle": "#F0F0EE"
+    },
+    "text": {
+      "primary": "#1A2E25",
+      "secondary": "#68736E",
+      "muted": "#9CA39F"
+    },
+    "accents": {
+      "primary": "#1A2E25",
+      "ai_insight": "#C86A58",
+      "positive": "#6A7A62",
+      "warning": "#D4A373",
+      "border": "#E5E5E2"
+    }
+  },
+  "typography": {
+    "font_families": {
+      "heading": "Manrope",
+      "body": "IBM Plex Sans",
+      "mono": "JetBrains Mono"
+    },
+    "scales": {
+      "h1": "text-4xl sm:text-5xl tracking-tight leading-none font-medium",
+      "h2": "text-2xl sm:text-3xl tracking-tight leading-tight font-medium",
+      "h3": "text-xl sm:text-2xl tracking-tight font-medium",
+      "body": "text-base leading-relaxed",
+      "small": "text-sm",
+      "overline": "text-xs uppercase tracking-[0.2em] font-medium text-muted-foreground"
+    }
+  },
+  "layout": {
+    "strategy": "Control Room Grid",
+    "spacing": "Dense but optical. Use gap-4 or gap-6 for dashboard widgets.",
+    "bento_rules": {
+      "container_padding": "p-6 or p-8",
+      "widget_height": "h-full to ensure optical alignment",
+      "max_width": "max-w-screen-2xl mx-auto"
+    }
+  },
+  "surfaces_and_components": {
+    "cards": {
+      "background": "bg-white",
+      "border": "border border-[#E5E5E2]",
+      "radius": "rounded-lg",
+      "shadow": "shadow-sm",
+      "hover": "hover:shadow-md hover:border-[#1A2E25]/20 transition-all duration-200"
+    },
+    "ai_panel": {
+      "background": "bg-[#F9F9F8]",
+      "border": "border border-[#C86A58]/30",
+      "accent_text": "text-[#C86A58]"
+    },
+    "buttons": {
+      "primary": "bg-[#1A2E25] text-white hover:bg-[#1A2E25]/90 rounded-md",
+      "secondary": "bg-white border border-[#E5E5E2] text-[#1A2E25] hover:bg-[#F9F9F8] rounded-md",
+      "ghost": "text-[#68736E] hover:text-[#1A2E25] hover:bg-[#F0F0EE]"
+    },
+    "navigation": {
+      "style": "Sidebar or top nav with solid background (bg-white), 1px bottom/right border. No glassmorphism for finance data clarity."
+    },
+    "shadcn_customization": {
+      "instruction": "Override default border radii to 6px or 8px (rounded-md/lg). Change primary ring color to deep forest green (#1A2E25). Avoid default slate/gray.",
+      "tables": "Dense padding, subtle row hover backgrounds (bg-[#F0F0EE]/50), clean column alignments."
+    }
+  },
+  "icons_and_media": {
+    "icon_library": "lucide-react",
+    "icon_style": "Geometric, clean, 1.5px stroke width",
+    "image_urls": [
+      {
+        "url": "https://images.unsplash.com/photo-1721383168321-a013f8ae890f?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2NDF8MHwxfHNlYXJjaHwxfHxtaW5pbWFsaXN0JTIwY2FsbSUyMHdvcmtzcGFjZSUyMGRlc2t8ZW58MHx8fHwxNzc2MDg4MTY1fDA&ixlib=rb-4.1.0&q=85",
+        "category": "auth_background",
+        "description": "Minimalist calm workspace with a potted plant, ideal for the login/signup page split-screen background."
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1601642964568-1917224f4e4d?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2NDF8MHwxfHNlYXJjaHwyfHxtaW5pbWFsaXN0JTIwY2FsbSUyMHdvcmtzcGFjZSUyMGRlc2t8ZW58MHx8fHwxNzc2MDg4MTY1fDA&ixlib=rb-4.1.0&q=85",
+        "category": "empty_state",
+        "description": "Clear drinking glass on wooden table. Good for 'No reports generated yet' or 'Workspace empty' states."
+      }
+    ]
+  },
+  "accessibility_and_motion": {
+    "motion": "Minimal. Use subtle translate-y-[-2px] on interactive cards. Staggered fade-in (opacity 0 to 1, y: 10 to 0) for dashboard widgets on load.",
+    "testing": "All interactive elements must have data-testid attributes (e.g., data-testid='upload-csv-button').",
+    "contrast": "Ensure text contrast against background. Do not use pure gray (#808080); use the tinted secondary/muted colors provided."
+  },
+  "instructions_to_main_agent": [
+    "Use standard Tailwind classes matching the hex codes provided (configure in tailwind.config.js).",
+    "Implement the Layout using CSS Grid with subgrid where applicable to maintain alignment across cards.",
+    "For the AI Insights page, use the 'ai_panel' styling for the primary cards to visually distinguish AI-generated content from standard data.",
+    "The login page should feature a split layout: clean white form on one side, and the 'auth_background' image on the other side with a subtle black/10 overlay if needed.",
+    "Do not use generic 'Inter' font. Import and configure 'Manrope' for headings and 'IBM Plex Sans' for body text via Google Fonts.",
+    "Use Shadcn UI for complex components like Datepickers and Select dropdowns, but strip away the default Vercel-like styling to match the flat, organic aesthetic."
+  ]
+}
