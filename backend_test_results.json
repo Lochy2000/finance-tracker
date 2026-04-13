@@ -1,0 +1,28 @@
+{
+  "total_tests": 19,
+  "passed_tests": 19,
+  "failed_tests": 0,
+  "success_rate": 100.0,
+  "passed_test_names": [
+    "Health Check",
+    "Admin Login",
+    "GET /auth/me",
+    "Dashboard Summary",
+    "Dashboard Quick Stats",
+    "GET /transactions",
+    "GET /transactions/categories",
+    "Transaction Search",
+    "Insights Summary",
+    "Recurring Payments",
+    "Unusual Spending",
+    "Savings Suggestions",
+    "Period Comparison",
+    "GET /reports",
+    "POST /reports/generate",
+    "GET /settings",
+    "GET /files",
+    "User Registration",
+    "Logout"
+  ],
+  "failed_test_details": []
+}

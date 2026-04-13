@@ -257,7 +257,7 @@ def create_auth_router(db):
     
     @router.get("/me")
     async def get_me(request: Request):
-        user = await get_current_user(request)
+        user = await get_current_user(request, db)
         return user
     
     @router.post("/refresh")

@@ -119,7 +119,7 @@ def create_reports_router(db, get_current_user):
         
         return report_data
     
-    @router.get("/")
+    @router.get("")
     async def list_reports(request: Request, skip: int = 0, limit: int = 20):
         """List saved reports."""
         user = await get_current_user(request)

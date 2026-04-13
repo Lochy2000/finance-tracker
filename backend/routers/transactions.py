@@ -9,7 +9,7 @@ router = APIRouter(prefix="/transactions", tags=["transactions"])
 def create_transactions_router(db, get_current_user):
     """Create transactions router with database and auth dependency."""
     
-    @router.get("/")
+    @router.get("")
     async def list_transactions(
         request: Request,
         page: int = Query(1, ge=1),

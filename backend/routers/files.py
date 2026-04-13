@@ -238,7 +238,7 @@ def create_files_router(db, get_current_user):
             "file_id": file_id
         }
     
-    @router.get("/")
+    @router.get("")
     async def list_files(request: Request, skip: int = 0, limit: int = 50):
         """List uploaded files for the current user."""
         user = await get_current_user(request)

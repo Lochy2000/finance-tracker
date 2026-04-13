@@ -15,7 +15,7 @@ router = APIRouter(prefix="/insights", tags=["insights"])
 def create_insights_router(db, get_current_user):
     """Create insights router with AI-powered analysis."""
     
-    @router.get("/")
+    @router.get("")
     async def get_all_insights(request: Request):
         """Get all AI insights for the user."""
         user = await get_current_user(request)

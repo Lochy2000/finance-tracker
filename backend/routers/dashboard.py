@@ -11,7 +11,7 @@ router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 def create_dashboard_router(db, get_current_user):
     """Create dashboard router with database and auth dependency."""
     
-    @router.get("/")
+    @router.get("")
     async def get_dashboard(
         request: Request,
         month: Optional[int] = None,

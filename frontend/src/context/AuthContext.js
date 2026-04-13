@@ -20,8 +20,10 @@ export function AuthProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    if (window.location.hash?.includes('session_id=')) {
+    // Don't check auth on OAuth callback or login page
+    if (window.location.hash?.includes('session_id=') || window.location.pathname === '/login') {
       setLoading(false);
+      setUser(false);
       return;
     }
     checkAuth();

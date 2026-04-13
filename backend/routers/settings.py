@@ -8,7 +8,7 @@ router = APIRouter(prefix="/settings", tags=["settings"])
 def create_settings_router(db, get_current_user):
     """Create settings router for user preferences."""
     
-    @router.get("/")
+    @router.get("")
     async def get_settings(request: Request):
         """Get user settings."""
         user = await get_current_user(request)
@@ -31,7 +31,7 @@ def create_settings_router(db, get_current_user):
         
         return settings
     
-    @router.patch("/")
+    @router.patch("")
     async def update_settings(request: Request):
         """Update user settings."""
         user = await get_current_user(request)
