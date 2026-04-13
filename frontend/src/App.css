@@ -1,34 +1,111 @@
-.App-logo {
-    height: 40vmin;
-    pointer-events: none;
+/* LedgerLens App Styles */
+
+/* Loading animation */
+.App-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: #F9F9F8;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-    .App-logo {
-        animation: App-logo-spin infinite 20s linear;
-    }
+/* Remove default focus outlines and add custom */
+*:focus-visible {
+  outline: 2px solid #1A2E25;
+  outline-offset: 2px;
 }
 
-.App-header {
-    background-color: #0f0f10;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-size: calc(10px + 2vmin);
-    color: white;
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
 }
 
-.App-link {
-    color: #61dafb;
+/* Better text rendering */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-@keyframes App-logo-spin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
+/* Custom selection color */
+::selection {
+  background-color: #1A2E25;
+  color: #FFFFFF;
+}
+
+/* Transition utilities */
+.transition-smooth {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Card shadow on hover */
+.card-interactive:hover {
+  box-shadow: 0 4px 12px rgba(26, 46, 37, 0.1);
+  transform: translateY(-1px);
+}
+
+/* Badge pulse animation for AI elements */
+@keyframes ai-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.ai-pulse {
+  animation: ai-pulse 2s ease-in-out infinite;
+}
+
+/* Table row hover */
+tr.table-row-hover:hover {
+  background-color: #F0F0EE;
+}
+
+/* Mobile menu animation */
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.mobile-menu-enter {
+  animation: slide-down 0.2s ease-out;
+}
+
+/* File drop zone active state */
+.drop-zone-active {
+  border-color: #1A2E25;
+  background-color: rgba(26, 46, 37, 0.05);
+}
+
+/* Chart tooltip custom styling */
+.recharts-tooltip-wrapper {
+  z-index: 100;
+}
+
+/* Loading skeleton shimmer */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    #F0F0EE 25%,
+    #E5E5E2 50%,
+    #F0F0EE 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
 }
