@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { dashboardApi } from '../lib/api';
 import { formatCurrency, getMonthName, getCategoryColor } from '../lib/utils';
+import { useSettings } from '../context/SettingsContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Skeleton } from '../components/ui/skeleton';
@@ -14,6 +15,9 @@ export function DashboardPage() {
   const [data, setData] = useState(null);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const { settings } = useSettings();
+  const currency = settings?.currency || 'GBP';
+  const fmt = (amount) => formatCurrency(amount, currency);
 
   const fetchDashboard = useCallback(async () => {
     setLoading(true);
@@ -59,8 +63,8 @@ export function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Total Spending" value={formatCurrency(data?.total_spend_month || 0)} icon={TrendingDown} iconColor="text-accent-ai" testId="stat-spending" />
-        <StatCard title="Total Income" value={formatCurrency(data?.total_income_month || 0)} icon={TrendingUp} iconColor="text-accent-positive" testId="stat-income" />
+        <StatCard title="Total Spending" value={fmt(data?.total_spend_month || 0)} icon={TrendingDown} iconColor="text-accent-ai" testId="stat-spending" />
+        <StatCard title="Total Income" value={fmt(data?.total_income_month || 0)} icon={TrendingUp} iconColor="text-accent-positive" testId="stat-income" />
         <StatCard title="Transactions" value={data?.transaction_count || 0} icon={CreditCard} iconColor="text-accent-primary" testId="stat-transactions" />
         <StatCard title="Files Uploaded" value={data?.recent_uploads?.length || 0} icon={Upload} iconColor="text-accent-warning" testId="stat-uploads" />
       </div>

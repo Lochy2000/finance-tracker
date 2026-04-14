@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useSettings } from '../context/SettingsContext';
 import { LayoutDashboard, Upload, CreditCard, Sparkles, FileText, Settings, LogOut, Menu, X, History } from 'lucide-react';
 import { Button } from '../components/ui/button';
-import { useState } from 'react';
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -17,8 +17,12 @@ const navItems = [
 
 export function Layout({ children }) {
   const { user, logout } = useAuth();
+  const { fetchSettings } = useSettings();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Load settings (theme, currency) when layout mounts
+  useEffect(() => { fetchSettings(); }, [fetchSettings]);
 
   const handleLogout = async () => {
     await logout();

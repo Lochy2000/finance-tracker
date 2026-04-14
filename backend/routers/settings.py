@@ -150,4 +150,20 @@ def create_settings_router(db, get_current_user):
         
         return updated_user
     
+    @router.delete("/account")
+    async def delete_account(request: Request):
+        """Permanently delete the user's account and all data."""
+        user = await get_current_user(request)
+        uid = user["user_id"]
+        # Delete all user data across collections
+        await db.transactions.delete_many({"user_id": uid})
+        await db.uploaded_files.delete_many({"user_id": uid})
+        await db.parsed_previews.delete_many({"user_id": uid})
+        await db.reports.delete_many({"user_id": uid})
+        await db.budgets.delete_many({"user_id": uid})
+        await db.accounts.delete_many({"user_id": uid})
+        await db.user_settings.delete_many({"user_id": uid})
+        await db.users.delete_one({"user_id": uid})
+        return {"message": "Account deleted permanently"}
+
     return router

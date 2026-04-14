@@ -166,6 +166,7 @@ export const settingsApi = {
   listAccounts: () => api.get('/settings/accounts'),
   createAccount: (data) => api.post('/settings/accounts', data),
   deleteAccount: (id) => api.delete(`/settings/accounts/${id}`),
+  deleteUserAccount: () => api.delete('/settings/account'),
 };
 
 export default api;

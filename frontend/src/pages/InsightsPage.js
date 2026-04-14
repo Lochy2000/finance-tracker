@@ -4,7 +4,7 @@ import { formatCurrency } from '../lib/utils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Skeleton } from '../components/ui/skeleton';
-import { Sparkles, TrendingUp, TrendingDown, AlertTriangle, RefreshCw, Lightbulb, ArrowUpRight, ArrowDownRight, Repeat, PiggyBank } from 'lucide-react';
+import { Sparkles, TrendingUp, TrendingDown, AlertTriangle, RefreshCw, Lightbulb, ArrowUpRight, ArrowDownRight, Repeat, PiggyBank, Target } from 'lucide-react';
 
 export function InsightsPage() {
   const [loading, setLoading] = useState(true);
@@ -46,6 +46,8 @@ export function InsightsPage() {
         </Card>
       )}
 
+      {data?.budget_alerts?.length > 0 && <BudgetAlertsCard alerts={data.budget_alerts} />}
+
       {data?.month_comparison && <MonthComparisonCard comparison={data.month_comparison} />}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -67,6 +69,40 @@ export function InsightsPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function BudgetAlertsCard({ alerts }) {
+  return (
+    <Card className="border-border-color border-l-4 border-l-accent-warning" data-testid="budget-alerts">
+      <CardHeader>
+        <div className="flex items-center gap-2"><Target className="w-5 h-5 text-accent-warning" /><CardTitle className="font-heading text-lg">Budget Alerts</CardTitle></div>
+        <CardDescription>Categories approaching or exceeding their spending limits</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          {alerts.map((a) => {
+            const pct = Math.min(a.percentage, 100);
+            const isCritical = a.severity === 'critical';
+            return (
+              <div key={a.category} className={`p-4 rounded-lg border ${isCritical ? 'bg-destructive/5 border-destructive/30' : 'bg-accent-warning/5 border-accent-warning/30'}`}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-medium text-fg-default">{a.category}</span>
+                  <Badge variant={isCritical ? "destructive" : "secondary"} className={isCritical ? '' : 'bg-accent-warning/10 text-accent-warning'}>
+                    {isCritical ? 'Over budget' : 'Warning'}
+                  </Badge>
+                </div>
+                <p className="text-sm text-fg-muted mb-2">{a.message}</p>
+                <div className="h-2 rounded-full bg-bg-subtle overflow-hidden">
+                  <div className={`h-full rounded-full ${isCritical ? 'bg-destructive' : 'bg-accent-warning'}`} style={{ width: `${pct}%` }} />
+                </div>
+                <p className="text-xs text-fg-muted mt-1">{formatCurrency(a.spent)} of {formatCurrency(a.limit)} ({a.percentage}%)</p>
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 

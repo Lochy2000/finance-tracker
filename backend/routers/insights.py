@@ -69,12 +69,37 @@ def create_insights_router(db, get_current_user):
         ]
         
         month_comparison = await compare_months(current_month_txns, prev_month_txns)
-        
+
+        # Budget alerts — flag categories approaching or exceeding their limits
+        budgets = await db.budgets.find({"user_id": user["user_id"]}, {"_id": 0}).to_list(100)
+        budget_alerts = []
+        if budgets:
+            from collections import defaultdict
+            current_cat_spend = defaultdict(float)
+            for t in current_month_txns:
+                if t["amount"] < 0:
+                    current_cat_spend[t.get("category", "Other")] += abs(t["amount"])
+            for b in budgets:
+                spent = current_cat_spend.get(b["category"], 0)
+                limit_val = b["monthly_limit"]
+                if limit_val > 0:
+                    pct = (spent / limit_val) * 100
+                    if pct >= 80:
+                        budget_alerts.append({
+                            "category": b["category"],
+                            "spent": round(spent, 2),
+                            "limit": limit_val,
+                            "percentage": round(pct, 1),
+                            "severity": "critical" if pct >= 100 else "warning",
+                            "message": f"{'Over budget' if pct >= 100 else 'Approaching limit'}: {b['category']} at {round(pct)}% of £{limit_val:.0f}"
+                        })
+
         return {
             "recurring_payments": recurring,
             "unusual_spending": unusual,
             "savings_suggestions": savings,
             "month_comparison": month_comparison,
+            "budget_alerts": budget_alerts,
             "generated_at": datetime.now(timezone.utc).isoformat()
         }
     
