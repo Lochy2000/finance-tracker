@@ -1,44 +1,30 @@
 # LedgerLens — PRD
 
 ## Original Problem Statement
-Build a full-stack MVP web application called LedgerLens, a private AI-powered finance tracker for analysing uploaded bank statements and exports.
+Build LedgerLens, an AI-powered personal finance tracker. Upload bank CSV/PDF, get AI categorisation, view dashboards/reports.
 
-## What's Been Implemented (2026-04-13)
-- Full backend with 7 routers (auth, files, transactions, dashboard, insights, reports, settings)
-- AI service with 6 mock functions (categorize, normalize, recurring, summary, unusual, savings)
-- CSV parser supporting Monzo, HSBC, generic formats; PDF placeholder
-- Frontend with 7 pages, all data-connected and working
-- JWT + Google OAuth authentication with brute-force protection
-- Axios 401 interceptor for automatic token refresh
-- Sample data seeding (~270 transactions)
-- Comprehensive documentation (9 docs + README)
-- Code quality refactor: all hook deps fixed, components extracted, insecure random replaced
+## What's Implemented (2026-04-14)
+- Auth: JWT + Google OAuth + change-password + brute-force protection + Axios 401 auto-refresh
+- 8 backend routers: auth, files, transactions, dashboard, insights, reports, settings, budgets
+- AI service: 6 mock functions (categorize, normalize, recurring, summary, unusual, savings) — designed for Ollama/local LLM swap
+- Parser: CSV (Monzo, HSBC, generic) + PDF regex extraction
+- Dashboard: charts, AI summary, budget progress bars
+- Budgets: per-category monthly limits with CRUD + progress tracking
+- Reports: generate + CSV export
+- Upload History: dedicated page for all uploaded files
+- Settings: profile, preferences, accounts, change password, budget management
+- Frontend: 8 pages, all data-connected and tested
 
-## Bugs Fixed (2026-04-13)
-- GET /api/auth/me 500 → fixed (missing db arg)
-- Dashboard/Transactions/etc 404 → fixed (route path mismatch with redirect_slashes)
-- insights/unusual crash → fixed (timedelta import order)
-
-## Verified Working (19/19 backend tests, 95% frontend)
-- Login, registration, logout, auth/me, token refresh
-- Dashboard with charts, AI summary, spending data
-- Transactions with search, filter, pagination, edit
-- AI Insights with recurring, unusual, savings, month comparison
-- Report generation with category breakdown
-- Settings with profile, preferences, accounts
-- CSV upload with parse + preview + import pipeline
+## AI Integration Strategy
+All AI functions are async, return plain dicts, and live in services/ai_service.py. The parser_service.py PDF extractor uses regex as a rule engine. When a local model (Ollama/vLLM) is connected, each function becomes a prompt+parse call with the current implementation as fallback.
 
 ## Prioritised Backlog
 ### P1
-- PDF transaction extraction
-- Password change flow
-- Report CSV/PDF export
-- Upload history page
-- Reset password frontend UI
-
-### P2
-- Multi-currency display
+- Connect real AI model (Ollama) for categorisation + summaries
+- Multi-currency display honouring user settings
 - Dark mode
+### P2
+- Natural language queries (requires LLM)
+- Merchant rules (user_rules collection)
+- Transaction splitting
 - Bulk category editing UI
-- Budgets feature
-- Merchant rules
