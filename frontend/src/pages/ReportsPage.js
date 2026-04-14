@@ -89,6 +89,23 @@ export function ReportsPage() {
     setSelectedCategories((prev) => prev.includes(category) ? prev.filter((c) => c !== category) : [...prev, category]);
   }, []);
 
+  const handleExportCsv = useCallback(async (reportId) => {
+    try {
+      const response = await reportsApi.exportCsv(reportId);
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `ledgerlens_report.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success('Report exported');
+    } catch {
+      toast.error('Failed to export report');
+    }
+  }, []);
+
   return (
     <div className="space-y-6 animate-fade-in" data-testid="reports-page">
       <div>
@@ -112,9 +129,9 @@ export function ReportsPage() {
                 <CardTitle className="font-heading text-lg">Report</CardTitle>
                 {currentReport && <CardDescription>{formatDate(currentReport.start_date)} - {formatDate(currentReport.end_date)}</CardDescription>}
               </div>
-              {currentReport && (
-                <Button variant="outline" onClick={() => toast.info('Export feature coming soon')} data-testid="export-report">
-                  <Download className="w-4 h-4 mr-2" />Export
+              {currentReport && currentReport.report_id && (
+                <Button variant="outline" onClick={() => handleExportCsv(currentReport.report_id)} data-testid="export-report">
+                  <Download className="w-4 h-4 mr-2" />Export CSV
                 </Button>
               )}
             </div>

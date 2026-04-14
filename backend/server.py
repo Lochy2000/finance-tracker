@@ -16,6 +16,7 @@ from routers.dashboard import create_dashboard_router
 from routers.insights import create_insights_router
 from routers.reports import create_reports_router
 from routers.settings import create_settings_router
+from routers.budgets import create_budgets_router
 
 # Configure logging
 logging.basicConfig(
@@ -72,6 +73,9 @@ app.include_router(reports_router, prefix="/api")
 
 settings_router = create_settings_router(db, get_user_with_db)
 app.include_router(settings_router, prefix="/api")
+
+budgets_router = create_budgets_router(db, get_user_with_db)
+app.include_router(budgets_router, prefix="/api")
 
 
 @app.get("/api/")

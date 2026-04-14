@@ -209,6 +209,109 @@ class LedgerLensAPITester:
                      "" if success else f"Registration failed: {data}")
         return success
 
+    def test_budgets_endpoints(self):
+        """Test budget CRUD operations"""
+        # Test list budgets
+        success, data = self.make_request('GET', '/budgets')
+        self.log_test("GET /budgets", success, 
+                     "" if success else f"Failed: {data}")
+        
+        # Test create budget
+        budget_data = {
+            "category": "Transport",
+            "monthly_limit": 200.0
+        }
+        success2, data2 = self.make_request('POST', '/budgets', budget_data)
+        self.log_test("POST /budgets (create)", success2, 
+                     "" if success2 else f"Failed: {data2}")
+        
+        budget_id = None
+        if success2 and 'budget_id' in data2:
+            budget_id = data2['budget_id']
+        
+        # Test delete budget if created
+        if budget_id:
+            success3, data3 = self.make_request('DELETE', f'/budgets/{budget_id}')
+            self.log_test("DELETE /budgets/{id}", success3, 
+                         "" if success3 else f"Failed: {data3}")
+        else:
+            success3 = False
+            self.log_test("DELETE /budgets/{id}", False, "No budget ID to delete")
+        
+        return success and success2 and success3
+
+    def test_change_password(self):
+        """Test change password functionality"""
+        # First login to get a fresh session
+        if not self.test_login():
+            return False
+            
+        password_data = {
+            "current_password": "Admin123!",
+            "new_password": "NewAdmin123!"
+        }
+        
+        success, data = self.make_request('POST', '/auth/change-password', password_data)
+        self.log_test("POST /auth/change-password", success, 
+                     "" if success else f"Failed: {data}")
+        
+        # Change password back to original
+        if success:
+            revert_data = {
+                "current_password": "NewAdmin123!",
+                "new_password": "Admin123!"
+            }
+            success2, data2 = self.make_request('POST', '/auth/change-password', revert_data)
+            self.log_test("Revert password change", success2, 
+                         "" if success2 else f"Failed: {data2}")
+            return success and success2
+        
+        return success
+
+    def test_csv_export(self):
+        """Test CSV export functionality"""
+        # First generate a report
+        report_data = {
+            "start_date": (datetime.now() - timedelta(days=30)).isoformat(),
+            "end_date": datetime.now().isoformat(),
+            "report_type": "summary"
+        }
+        
+        success, data = self.make_request('POST', '/reports/generate', report_data)
+        if not success or 'report_id' not in data:
+            self.log_test("CSV Export (generate report first)", False, "Failed to generate report")
+            return False
+        
+        report_id = data['report_id']
+        
+        # Test CSV export endpoint
+        url = f"{self.base_url}/api/reports/{report_id}/export"
+        headers = {}
+        if self.access_token:
+            headers['Authorization'] = f'Bearer {self.access_token}'
+        
+        try:
+            response = self.session.get(url, headers=headers)
+            success = response.status_code == 200 and 'text/csv' in response.headers.get('content-type', '')
+            self.log_test("GET /reports/{id}/export (CSV)", success, 
+                         "" if success else f"Status: {response.status_code}, Content-Type: {response.headers.get('content-type')}")
+            return success
+        except Exception as e:
+            self.log_test("GET /reports/{id}/export (CSV)", False, f"Error: {str(e)}")
+            return False
+
+    def test_dashboard_budget_progress(self):
+        """Test dashboard returns budget progress data"""
+        success, data = self.make_request('GET', '/dashboard')
+        
+        if success and 'budget_progress' in data:
+            self.log_test("Dashboard budget_progress field", True)
+            return True
+        else:
+            self.log_test("Dashboard budget_progress field", False, 
+                         f"Missing budget_progress in response: {list(data.keys()) if isinstance(data, dict) else data}")
+            return False
+
     def test_logout(self):
         """Test logout functionality"""
         success, data = self.make_request('POST', '/auth/logout')
@@ -235,11 +338,17 @@ class LedgerLensAPITester:
         # Core API tests (these were the main fixes)
         self.test_auth_me()
         self.test_dashboard_endpoints()
+        self.test_dashboard_budget_progress()
         self.test_transactions_endpoints()
         self.test_insights_endpoints()
         self.test_reports_endpoints()
         self.test_settings_endpoints()
         self.test_files_endpoints()
+        
+        # New features testing
+        self.test_budgets_endpoints()
+        self.test_change_password()
+        self.test_csv_export()
         
         # Additional flows
         self.test_registration_flow()

@@ -4,7 +4,7 @@ import { formatCurrency, getMonthName, getCategoryColor } from '../lib/utils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Skeleton } from '../components/ui/skeleton';
-import { TrendingDown, TrendingUp, CreditCard, Upload, Sparkles, ArrowUpRight } from 'lucide-react';
+import { TrendingDown, TrendingUp, CreditCard, Upload, Sparkles, ArrowUpRight, Target } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 
 const TOOLTIP_STYLE = { backgroundColor: '#fff', border: '1px solid #E5E5E2', borderRadius: '8px' };
@@ -74,6 +74,8 @@ export function DashboardPage() {
         <TopMerchantsList merchants={data?.top_merchants} />
         <AISummaryPanel summary={data?.ai_summary} />
       </div>
+
+      {data?.budget_progress?.length > 0 && <BudgetProgressPanel budgets={data.budget_progress} />}
 
       {data?.recent_uploads?.length > 0 && <RecentUploadsList uploads={data.recent_uploads} />}
     </div>
@@ -218,6 +220,47 @@ function AISummaryPanel({ summary }) {
         ) : (
           <EmptyState message="Upload transactions to get AI insights" />
         )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function BudgetProgressPanel({ budgets }) {
+  return (
+    <Card className="border-border-color" data-testid="budget-progress-panel">
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <Target className="w-5 h-5 text-accent-primary" />
+          <CardTitle className="font-heading text-lg">Budget Progress</CardTitle>
+        </div>
+        <CardDescription>Monthly spending limits by category</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {budgets.map((b) => {
+            const pct = Math.min(b.percentage, 100);
+            let barColor = 'bg-accent-positive';
+            if (b.percentage > 90) barColor = 'bg-destructive';
+            else if (b.percentage > 70) barColor = 'bg-accent-warning';
+            return (
+              <div key={b.budget_id}>
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: getCategoryColor(b.category) }} />
+                    <span className="text-sm font-medium text-fg-default">{b.category}</span>
+                  </div>
+                  <span className="text-sm text-fg-secondary">
+                    {formatCurrency(b.spent)} / {formatCurrency(b.monthly_limit)}
+                    {b.over_budget && <span className="ml-2 text-destructive font-medium">Over budget</span>}
+                  </span>
+                </div>
+                <div className="h-2.5 rounded-full bg-bg-subtle overflow-hidden">
+                  <div className={`h-full rounded-full transition-all duration-500 ${barColor}`} style={{ width: `${pct}%` }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </CardContent>
     </Card>
   );

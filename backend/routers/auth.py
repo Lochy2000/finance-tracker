@@ -68,6 +68,11 @@ class ResetPasswordRequest(BaseModel):
     new_password: str = Field(min_length=6)
 
 
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str = Field(min_length=6)
+
+
 class GoogleSessionRequest(BaseModel):
     session_id: str
 
@@ -356,6 +361,24 @@ def create_auth_router(db):
         
         return {"message": "Password reset successful"}
     
+    @router.post("/change-password")
+    async def change_password(request_data: ChangePasswordRequest, request: Request):
+        """Change password for the currently authenticated user."""
+        user_full = await get_current_user(request, db)
+        user_doc = await db.users.find_one({"user_id": user_full["user_id"]})
+        if not user_doc:
+            raise HTTPException(status_code=404, detail="User not found")
+        if not user_doc.get("password_hash"):
+            raise HTTPException(status_code=400, detail="Password change not available for Google-authenticated accounts")
+        if not verify_password(request_data.current_password, user_doc["password_hash"]):
+            raise HTTPException(status_code=400, detail="Current password is incorrect")
+        new_hash = hash_password(request_data.new_password)
+        await db.users.update_one(
+            {"user_id": user_full["user_id"]},
+            {"$set": {"password_hash": new_hash}}
+        )
+        return {"message": "Password changed successfully"}
+
     # Google OAuth - Emergent Auth Integration
     # REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
     @router.post("/google/session")

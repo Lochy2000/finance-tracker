@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { settingsApi } from '../lib/api';
+import { settingsApi, authApi, budgetsApi } from '../lib/api';
+import { formatCurrency, getCategoryColor } from '../lib/utils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -8,8 +9,10 @@ import { Label } from '../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Switch } from '../components/ui/switch';
 import { Separator } from '../components/ui/separator';
-import { User, Settings2, CreditCard, Shield, Loader2, Plus, Trash2 } from 'lucide-react';
+import { User, Settings2, CreditCard, Shield, Loader2, Plus, Trash2, Target, Lock } from 'lucide-react';
 import { toast } from 'sonner';
+
+const CATEGORIES = ['Groceries','Transport','Dining','Shopping','Entertainment','Bills','Health','Subscriptions','Travel','Other'];
 
 export function SettingsPage() {
   const { user } = useAuth();
@@ -19,14 +22,20 @@ export function SettingsPage() {
   const [profile, setProfile] = useState({ name: '', email: '' });
   const [accounts, setAccounts] = useState([]);
   const [newAccountName, setNewAccountName] = useState('');
+  const [budgets, setBudgets] = useState([]);
+  const [newBudgetCat, setNewBudgetCat] = useState('');
+  const [newBudgetLimit, setNewBudgetLimit] = useState('');
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [settingsRes, profileRes, accountsRes] = await Promise.all([settingsApi.get(), settingsApi.getProfile(), settingsApi.listAccounts()]);
+      const [settingsRes, profileRes, accountsRes, budgetsRes] = await Promise.all([
+        settingsApi.get(), settingsApi.getProfile(), settingsApi.listAccounts(), budgetsApi.list()
+      ]);
       setSettings(settingsRes.data);
       setProfile(profileRes.data);
       setAccounts(accountsRes.data.accounts || []);
+      setBudgets(budgetsRes.data.budgets || []);
     } catch {
       // Failed to load settings
     } finally {
@@ -68,6 +77,28 @@ export function SettingsPage() {
     } catch { toast.error('Failed to remove account'); }
   }, []);
 
+  const handleAddBudget = useCallback(async () => {
+    if (!newBudgetCat || !newBudgetLimit) return;
+    try {
+      const response = await budgetsApi.create({ category: newBudgetCat, monthly_limit: parseFloat(newBudgetLimit) });
+      setBudgets((prev) => {
+        const filtered = prev.filter((b) => b.category !== newBudgetCat);
+        return [...filtered, response.data];
+      });
+      setNewBudgetCat('');
+      setNewBudgetLimit('');
+      toast.success('Budget set');
+    } catch { toast.error('Failed to set budget'); }
+  }, [newBudgetCat, newBudgetLimit]);
+
+  const handleDeleteBudget = useCallback(async (budgetId) => {
+    try {
+      await budgetsApi.delete(budgetId);
+      setBudgets((prev) => prev.filter((b) => b.budget_id !== budgetId));
+      toast.success('Budget removed');
+    } catch { toast.error('Failed to remove budget'); }
+  }, []);
+
   if (loading) return <div className="flex items-center justify-center h-[400px]"><Loader2 className="w-8 h-8 animate-spin text-accent-primary" /></div>;
 
   return (
@@ -76,11 +107,12 @@ export function SettingsPage() {
         <h1 className="font-heading text-2xl sm:text-3xl font-bold text-fg-default">Settings</h1>
         <p className="text-fg-secondary mt-1">Manage your account and preferences</p>
       </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <ProfileCard profile={profile} setProfile={setProfile} saving={saving} onSave={handleSaveProfile} />
         <PreferencesCard settings={settings} setSettings={setSettings} saving={saving} onSave={handleSaveSettings} />
+        <BudgetsCard budgets={budgets} newCat={newBudgetCat} setNewCat={setNewBudgetCat} newLimit={newBudgetLimit} setNewLimit={setNewBudgetLimit} onAdd={handleAddBudget} onDelete={handleDeleteBudget} />
         <AccountsCard accounts={accounts} newAccountName={newAccountName} setNewAccountName={setNewAccountName} onAdd={handleAddAccount} onDelete={handleDeleteAccount} />
+        <ChangePasswordCard />
         <SecurityCard />
       </div>
     </div>
@@ -90,23 +122,11 @@ export function SettingsPage() {
 function ProfileCard({ profile, setProfile, saving, onSave }) {
   return (
     <Card className="border-border-color">
-      <CardHeader>
-        <div className="flex items-center gap-2"><User className="w-5 h-5 text-accent-primary" /><CardTitle className="font-heading text-lg">Profile</CardTitle></div>
-        <CardDescription>Manage your personal information</CardDescription>
-      </CardHeader>
+      <CardHeader><div className="flex items-center gap-2"><User className="w-5 h-5 text-accent-primary" /><CardTitle className="font-heading text-lg">Profile</CardTitle></div><CardDescription>Manage your personal information</CardDescription></CardHeader>
       <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="name">Name</Label>
-          <Input id="name" value={profile.name} onChange={(e) => setProfile({ ...profile, name: e.target.value })} data-testid="profile-name" />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
-          <Input id="email" value={profile.email} disabled className="bg-bg-subtle" />
-          <p className="text-xs text-fg-muted">Email cannot be changed</p>
-        </div>
-        <Button onClick={onSave} disabled={saving} className="bg-accent-primary hover:bg-accent-primary/90" data-testid="save-profile">
-          {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}Save Profile
-        </Button>
+        <div className="space-y-2"><Label htmlFor="name">Name</Label><Input id="name" value={profile.name} onChange={(e) => setProfile({ ...profile, name: e.target.value })} data-testid="profile-name" /></div>
+        <div className="space-y-2"><Label htmlFor="email">Email</Label><Input id="email" value={profile.email} disabled className="bg-bg-subtle" /><p className="text-xs text-fg-muted">Email cannot be changed</p></div>
+        <Button onClick={onSave} disabled={saving} className="bg-accent-primary hover:bg-accent-primary/90" data-testid="save-profile">{saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}Save Profile</Button>
       </CardContent>
     </Card>
   );
@@ -115,36 +135,51 @@ function ProfileCard({ profile, setProfile, saving, onSave }) {
 function PreferencesCard({ settings, setSettings, saving, onSave }) {
   return (
     <Card className="border-border-color">
-      <CardHeader>
-        <div className="flex items-center gap-2"><Settings2 className="w-5 h-5 text-accent-primary" /><CardTitle className="font-heading text-lg">Preferences</CardTitle></div>
-        <CardDescription>Customize your experience</CardDescription>
-      </CardHeader>
+      <CardHeader><div className="flex items-center gap-2"><Settings2 className="w-5 h-5 text-accent-primary" /><CardTitle className="font-heading text-lg">Preferences</CardTitle></div><CardDescription>Customize your experience</CardDescription></CardHeader>
       <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label>Currency</Label>
-          <Select value={settings.currency} onValueChange={(v) => setSettings({ ...settings, currency: v })}>
-            <SelectTrigger data-testid="currency-select"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="GBP">GBP (£)</SelectItem><SelectItem value="USD">USD ($)</SelectItem><SelectItem value="EUR">EUR (€)</SelectItem>
-            </SelectContent>
+        <div className="space-y-2"><Label>Currency</Label><Select value={settings.currency} onValueChange={(v) => setSettings({ ...settings, currency: v })}><SelectTrigger data-testid="currency-select"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="GBP">GBP (£)</SelectItem><SelectItem value="USD">USD ($)</SelectItem><SelectItem value="EUR">EUR (€)</SelectItem></SelectContent></Select></div>
+        <div className="space-y-2"><Label>Date Format</Label><Select value={settings.date_format} onValueChange={(v) => setSettings({ ...settings, date_format: v })}><SelectTrigger data-testid="date-format-select"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="DD/MM/YYYY">DD/MM/YYYY</SelectItem><SelectItem value="MM/DD/YYYY">MM/DD/YYYY</SelectItem><SelectItem value="YYYY-MM-DD">YYYY-MM-DD</SelectItem></SelectContent></Select></div>
+        <div className="flex items-center justify-between"><div className="space-y-0.5"><Label>Notifications</Label><p className="text-xs text-fg-muted">Receive alerts about unusual spending</p></div><Switch checked={settings.notifications_enabled} onCheckedChange={(v) => setSettings({ ...settings, notifications_enabled: v })} data-testid="notifications-toggle" /></div>
+        <Button onClick={onSave} disabled={saving} className="bg-accent-primary hover:bg-accent-primary/90" data-testid="save-settings">{saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}Save Preferences</Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+function BudgetsCard({ budgets, newCat, setNewCat, newLimit, setNewLimit, onAdd, onDelete }) {
+  const existingCategories = budgets.map((b) => b.category);
+  const availableCategories = CATEGORIES.filter((c) => !existingCategories.includes(c));
+  return (
+    <Card className="border-border-color" data-testid="budgets-card">
+      <CardHeader><div className="flex items-center gap-2"><Target className="w-5 h-5 text-accent-primary" /><CardTitle className="font-heading text-lg">Monthly Budgets</CardTitle></div><CardDescription>Set spending limits per category</CardDescription></CardHeader>
+      <CardContent className="space-y-4">
+        {budgets.length > 0 ? (
+          <div className="space-y-2">
+            {budgets.map((b) => (
+              <div key={b.budget_id} className="flex items-center justify-between p-3 bg-bg-subtle rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: getCategoryColor(b.category) }} />
+                  <span className="font-medium text-fg-default">{b.category}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-fg-secondary">{formatCurrency(b.monthly_limit)}/mo</span>
+                  <Button variant="ghost" size="icon" onClick={() => onDelete(b.budget_id)} data-testid={`delete-budget-${b.budget_id}`}><Trash2 className="w-4 h-4 text-fg-muted" /></Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-fg-muted py-4 text-center">No budgets set. Add one below.</p>
+        )}
+        <Separator />
+        <div className="flex gap-2">
+          <Select value={newCat || "pick"} onValueChange={(v) => setNewCat(v === "pick" ? "" : v)}>
+            <SelectTrigger className="flex-1" data-testid="budget-category-select"><SelectValue placeholder="Category" /></SelectTrigger>
+            <SelectContent><SelectItem value="pick" disabled>Category</SelectItem>{availableCategories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
           </Select>
+          <Input type="number" placeholder="Limit (£)" value={newLimit} onChange={(e) => setNewLimit(e.target.value)} className="w-28" data-testid="budget-limit-input" />
+          <Button variant="outline" onClick={onAdd} disabled={!newCat || !newLimit} data-testid="add-budget-btn"><Plus className="w-4 h-4 mr-1" />Set</Button>
         </div>
-        <div className="space-y-2">
-          <Label>Date Format</Label>
-          <Select value={settings.date_format} onValueChange={(v) => setSettings({ ...settings, date_format: v })}>
-            <SelectTrigger data-testid="date-format-select"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="DD/MM/YYYY">DD/MM/YYYY</SelectItem><SelectItem value="MM/DD/YYYY">MM/DD/YYYY</SelectItem><SelectItem value="YYYY-MM-DD">YYYY-MM-DD</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex items-center justify-between">
-          <div className="space-y-0.5"><Label>Notifications</Label><p className="text-xs text-fg-muted">Receive alerts about unusual spending</p></div>
-          <Switch checked={settings.notifications_enabled} onCheckedChange={(v) => setSettings({ ...settings, notifications_enabled: v })} data-testid="notifications-toggle" />
-        </div>
-        <Button onClick={onSave} disabled={saving} className="bg-accent-primary hover:bg-accent-primary/90" data-testid="save-settings">
-          {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}Save Preferences
-        </Button>
       </CardContent>
     </Card>
   );
@@ -153,26 +188,18 @@ function PreferencesCard({ settings, setSettings, saving, onSave }) {
 function AccountsCard({ accounts, newAccountName, setNewAccountName, onAdd, onDelete }) {
   return (
     <Card className="border-border-color">
-      <CardHeader>
-        <div className="flex items-center gap-2"><CreditCard className="w-5 h-5 text-accent-primary" /><CardTitle className="font-heading text-lg">Accounts</CardTitle></div>
-        <CardDescription>Manage your linked bank accounts</CardDescription>
-      </CardHeader>
+      <CardHeader><div className="flex items-center gap-2"><CreditCard className="w-5 h-5 text-accent-primary" /><CardTitle className="font-heading text-lg">Accounts</CardTitle></div><CardDescription>Manage your linked bank accounts</CardDescription></CardHeader>
       <CardContent className="space-y-4">
         {accounts.length > 0 ? (
           <div className="space-y-2">
             {accounts.map((acc) => (
               <div key={acc.account_id} className="flex items-center justify-between p-3 bg-bg-subtle rounded-lg">
-                <div>
-                  <p className="font-medium text-fg-default">{acc.name}</p>
-                  {acc.bank_name && <p className="text-xs text-fg-muted">{acc.bank_name}</p>}
-                </div>
+                <div><p className="font-medium text-fg-default">{acc.name}</p>{acc.bank_name && <p className="text-xs text-fg-muted">{acc.bank_name}</p>}</div>
                 <Button variant="ghost" size="icon" onClick={() => onDelete(acc.account_id)}><Trash2 className="w-4 h-4 text-fg-muted" /></Button>
               </div>
             ))}
           </div>
-        ) : (
-          <p className="text-sm text-fg-muted py-4 text-center">No accounts added yet</p>
-        )}
+        ) : (<p className="text-sm text-fg-muted py-4 text-center">No accounts added yet</p>)}
         <Separator />
         <div className="flex gap-2">
           <Input placeholder="Account name" value={newAccountName} onChange={(e) => setNewAccountName(e.target.value)} data-testid="new-account-name" />
@@ -183,28 +210,47 @@ function AccountsCard({ accounts, newAccountName, setNewAccountName, onAdd, onDe
   );
 }
 
+function ChangePasswordCard() {
+  const [currentPw, setCurrentPw] = useState('');
+  const [newPw, setNewPw] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const handleChangePassword = async () => {
+    if (!currentPw || newPw.length < 6) { toast.error('New password must be at least 6 characters'); return; }
+    setSaving(true);
+    try {
+      await authApi.changePassword(currentPw, newPw);
+      toast.success('Password changed successfully');
+      setCurrentPw('');
+      setNewPw('');
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to change password');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Card className="border-border-color" data-testid="change-password-card">
+      <CardHeader><div className="flex items-center gap-2"><Lock className="w-5 h-5 text-accent-primary" /><CardTitle className="font-heading text-lg">Change Password</CardTitle></div><CardDescription>Update your account password</CardDescription></CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-2"><Label htmlFor="current-pw">Current Password</Label><Input id="current-pw" type="password" value={currentPw} onChange={(e) => setCurrentPw(e.target.value)} data-testid="current-password" /></div>
+        <div className="space-y-2"><Label htmlFor="new-pw">New Password</Label><Input id="new-pw" type="password" placeholder="Min 6 characters" value={newPw} onChange={(e) => setNewPw(e.target.value)} data-testid="new-password" /></div>
+        <Button onClick={handleChangePassword} disabled={saving || !currentPw || newPw.length < 6} className="bg-accent-primary hover:bg-accent-primary/90" data-testid="change-password-btn">
+          {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}Change Password
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
 function SecurityCard() {
   return (
     <Card className="border-border-color">
-      <CardHeader>
-        <div className="flex items-center gap-2"><Shield className="w-5 h-5 text-accent-primary" /><CardTitle className="font-heading text-lg">Security</CardTitle></div>
-        <CardDescription>Protect your account</CardDescription>
-      </CardHeader>
+      <CardHeader><div className="flex items-center gap-2"><Shield className="w-5 h-5 text-accent-primary" /><CardTitle className="font-heading text-lg">Security</CardTitle></div><CardDescription>Protect your account</CardDescription></CardHeader>
       <CardContent className="space-y-4">
-        <div className="p-4 bg-bg-subtle rounded-lg">
-          <h4 className="font-medium text-fg-default mb-2">Data Privacy</h4>
-          <p className="text-sm text-fg-muted">Your financial data is stored securely and never shared with third parties. All connections use encryption.</p>
-        </div>
-        <div className="p-4 bg-bg-subtle rounded-lg">
-          <h4 className="font-medium text-fg-default mb-2">Change Password</h4>
-          <p className="text-sm text-fg-muted mb-3">Update your password regularly to keep your account secure.</p>
-          <Button variant="outline" disabled>Change Password (Coming Soon)</Button>
-        </div>
-        <div className="p-4 bg-bg-subtle rounded-lg border border-destructive/20">
-          <h4 className="font-medium text-destructive mb-2">Delete Account</h4>
-          <p className="text-sm text-fg-muted mb-3">Permanently delete your account and all associated data.</p>
-          <Button variant="outline" className="text-destructive hover:bg-destructive/10" disabled>Delete Account (Coming Soon)</Button>
-        </div>
+        <div className="p-4 bg-bg-subtle rounded-lg"><h4 className="font-medium text-fg-default mb-2">Data Privacy</h4><p className="text-sm text-fg-muted">Your financial data is stored securely and never shared with third parties. All connections use encryption.</p></div>
+        <div className="p-4 bg-bg-subtle rounded-lg border border-destructive/20"><h4 className="font-medium text-destructive mb-2">Delete Account</h4><p className="text-sm text-fg-muted mb-3">Permanently delete your account and all associated data.</p><Button variant="outline" className="text-destructive hover:bg-destructive/10" disabled>Delete Account (Coming Soon)</Button></div>
       </CardContent>
     </Card>
   );

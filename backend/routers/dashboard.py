@@ -106,7 +106,24 @@ def create_dashboard_router(db, get_current_user):
         if transactions:
             summary_data = await generate_monthly_summary(transactions, month, year)
             ai_summary = summary_data
-        
+
+        # Budget progress for this month
+        budgets = await db.budgets.find({"user_id": user["user_id"]}, {"_id": 0}).to_list(100)
+        budget_progress = []
+        for b in budgets:
+            cat = b["category"]
+            spent = category_totals[cat]["amount"] if cat in category_totals else 0
+            limit_val = b["monthly_limit"]
+            pct = round((spent / limit_val * 100) if limit_val > 0 else 0, 1)
+            budget_progress.append({
+                "budget_id": b["budget_id"],
+                "category": cat,
+                "monthly_limit": limit_val,
+                "spent": round(spent, 2),
+                "percentage": min(pct, 999),
+                "over_budget": spent > limit_val
+            })
+
         return {
             "total_spend_month": round(total_spend, 2),
             "total_income_month": round(total_income, 2),
@@ -115,6 +132,7 @@ def create_dashboard_router(db, get_current_user):
             "top_merchants": top_merchants,
             "recent_uploads": recent_uploads,
             "ai_summary": ai_summary,
+            "budget_progress": budget_progress,
             "month": month,
             "year": year,
             "transaction_count": len(transactions)

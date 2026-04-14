@@ -1,6 +1,6 @@
 {
-  "total_tests": 19,
-  "passed_tests": 19,
+  "total_tests": 27,
+  "passed_tests": 27,
   "failed_tests": 0,
   "success_rate": 100.0,
   "passed_test_names": [
@@ -9,6 +9,7 @@
     "GET /auth/me",
     "Dashboard Summary",
     "Dashboard Quick Stats",
+    "Dashboard budget_progress field",
     "GET /transactions",
     "GET /transactions/categories",
     "Transaction Search",
@@ -21,6 +22,13 @@
     "POST /reports/generate",
     "GET /settings",
     "GET /files",
+    "GET /budgets",
+    "POST /budgets (create)",
+    "DELETE /budgets/{id}",
+    "Admin Login",
+    "POST /auth/change-password",
+    "Revert password change",
+    "GET /reports/{id}/export (CSV)",
     "User Registration",
     "Logout"
   ],

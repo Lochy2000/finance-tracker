@@ -74,6 +74,8 @@ export const authApi = {
   forgotPassword: (email) => api.post('/auth/forgot-password', { email }),
   resetPassword: (token, newPassword) =>
     api.post('/auth/reset-password', { token, new_password: newPassword }),
+  changePassword: (currentPassword, newPassword) =>
+    api.post('/auth/change-password', { current_password: currentPassword, new_password: newPassword }),
   googleSession: (sessionId) => api.post('/auth/google/session', { session_id: sessionId }),
 };
 
@@ -145,6 +147,14 @@ export const reportsApi = {
   list: (skip = 0, limit = 20) => api.get(`/reports?skip=${skip}&limit=${limit}`),
   get: (id) => api.get(`/reports/${id}`),
   delete: (id) => api.delete(`/reports/${id}`),
+  exportCsv: (id) => api.get(`/reports/${id}/export`, { responseType: 'blob' }),
+};
+
+// Budgets endpoints
+export const budgetsApi = {
+  list: () => api.get('/budgets'),
+  create: (data) => api.post('/budgets', data),
+  delete: (id) => api.delete(`/budgets/${id}`),
 };
 
 // Settings endpoints
